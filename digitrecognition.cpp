@@ -35,7 +35,9 @@ int main(){
 	AI::NeuralNetwork nn("digitRecognition.nn");
 
 	int correct = 0;
+	std::cout << "testing . . .\n";
 	for(int i = 0; i < elements; i++){
+// 		std::cout << i << '\n';
 		//image reading
 		std::vector<double> image(rows*columns);
 		for(int j = 0; j < rows*columns; j++){
@@ -43,18 +45,18 @@ int main(){
 			image[j] = (double)pixel/255;
 		}
 		lab.read(reinterpret_cast<char*>(&digit), sizeof(digit)); 
-		std::vector<double> ll(10);
+// 		std::vector<double> ll(10);
 		std::vector<double> result(10);
-		for(int j = 0; j < 10; j++){
-			if(j == digit) ll[j] = 1.0;
-			else ll[j] = 0.0;
-		}
+// 		for(int j = 0; j < 10; j++){
+// 			if(j == digit) ll[j] = 1.0;
+// 			else ll[j] = 0.0;
+// 		}
 
 		nn.FeedInData(image);
 		
 		nn.getData(result);
 
-		nn.Backpropagation(ll);
+// 		nn.Backpropagation(ll);
 		
 
 		double max = result[0];
@@ -62,6 +64,7 @@ int main(){
 		for(int j = 1; j < 10; j++){ if(result[j] > max) {max = result[j]; guess = j;} }
 		if(guess == digit){
 			correct++;
+// 			std::cout << i << " " << guess << '\n';
 		}
 
 

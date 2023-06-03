@@ -6,19 +6,19 @@
 
 namespace AI{
 
-struct connections{ double weight, deltaweight; };
+struct connections{ long double weight, deltaweight; };
 
 class Neuron{
 	std::vector<connections> fwd;
-	static double f(double x);
-	static double df(double x);
+	static long double f(long double x);
+	static long double df(long double x);
 	int ith;
 	
-	static double alpha, eta;
 
 public:
-	double OutputVal;
-	double Gradient;
+	static long double alpha, eta;
+	long double OutputVal;
+	long double Gradient;
 	Neuron(int fwdElements, int bckElements, int i, bool randW = 1,
 					const std::vector<double>* v = 0);
 	void activate(const std::vector<Neuron>& lastLayer);

@@ -1,5 +1,6 @@
 #include "NeuralNetwork.hpp"
 #include <cstdlib>
+#include <random>
 #include <cassert>
 #include <cmath>
 #include <vector>
@@ -16,6 +17,7 @@ AI::NeuralNetwork::NeuralNetwork(const std::vector<int>& topology){
 			int fwd, bck;
 			if(i == 0) fwd = topology[i+1], bck = 0;
 			else if(i == topology.size()-1) fwd = 0, bck = topology[i-1];
+			else fwd = topology[i+1], bck = topology[i-1];
 			net.back().push_back(Neuron(fwd, bck, j));
 		}
 	}
@@ -46,9 +48,9 @@ void AI::NeuralNetwork::Backpropagation(const std::vector<double>& data){
 	
 	assert(data.size() == net.back().size() - 1);
 // 	error = 0; //reset the error
-	for(int i = 0; i < net.back().size() - 1; i++){
-		error += (data[i] - net.back()[i].OutputVal)*(data[i] - net.back()[i].OutputVal);
-	}
+// 	for(int i = 0; i < net.back().size() - 1; i++){
+// 		error += (data[i] - net.back()[i].OutputVal)*(data[i] - net.back()[i].OutputVal);
+// 	}
 // 	error /= ((double)data.size()-1);
 // 	error = std::sqrt(error);
 
@@ -126,16 +128,24 @@ AI::NeuralNetwork::NeuralNetwork(const std::string& file){
 
 /************NEURON****************/
 
-double AI::Neuron::alpha = 0.4;
-double AI::Neuron::eta = 0.1;
+long double AI::Neuron::alpha = 0.8;
+long double AI::Neuron::eta = 0.0001;
 
 AI::Neuron::Neuron(int fwdElements, int bckElements, int i, bool randW,
 				const std::vector<double>* v){
 	ith = i;
-	if(randW)
+	if(randW){
+		std::random_device rd;
+		std::mt19937 generator(rd());
+
+		long double xavierFactor = 1.0/sqrt(fwdElements);
+		
 		for(int i = 0; i < fwdElements; i++){
-			fwd.push_back({rand()/((double)RAND_MAX), 0});
+			std::normal_distribution<double> dist(0, xavierFactor);
+			long double w = dist(generator);
+			fwd.push_back({w, 0});
 		}
+	}
 	else
 		for(int i = 0; i < fwdElements; i++){
 			fwd.push_back({(*v)[i], 0});
@@ -144,22 +154,26 @@ AI::Neuron::Neuron(int fwdElements, int bckElements, int i, bool randW,
 
 void AI::Neuron::updateWeights(std::vector<Neuron>& lastLayer){
 	for(int i = 0; i < lastLayer.size() - 1; i++){
-		double delta = 
-				eta * lastLayer[i].OutputVal * Gradient +
-				alpha * lastLayer[i].fwd[ith].deltaweight;
+		long double delta = 
+				eta * lastLayer[i].OutputVal * Gradient
+				+alpha * lastLayer[i].fwd[ith].deltaweight
+				;
 		lastLayer[i].fwd[ith].deltaweight = delta;
 		lastLayer[i].fwd[ith].weight += delta;
+// 		Gradient = 0;
 	}
 }
 
 void AI::Neuron::activate(const std::vector<Neuron>& lastLayer){
-	double totalX = 0;
-	double bais = lastLayer.back().OutputVal;
+	OutputVal = 0;
+	long double totalX = 0;
+	long double bais = lastLayer.back().OutputVal;
 	for(int i = 0; i < lastLayer.size() - 1; i++){
 		totalX += lastLayer[i].OutputVal*lastLayer[i].fwd[ith].weight;
 	}
+	totalX += bais;
 	OutputVal = f(totalX);
-// 	if(OutputVal == 1)
+// 	if(OutputVal == 0)
 // 		std::cerr << totalX << '\n';
 }
 
@@ -168,7 +182,7 @@ void AI::Neuron::calculateOutputGradient(double data){
 }
 
 void AI::Neuron::calculateHiddenLayerGradiend(const std::vector<AI::Neuron>& nextLayer){
-	double sum = 0;
+	long double sum = 0;
 	for(int i = 0; i < nextLayer.size() - 1; i++){
 		sum += fwd[i].weight * nextLayer[i].Gradient;
 	}
@@ -176,12 +190,11 @@ void AI::Neuron::calculateHiddenLayerGradiend(const std::vector<AI::Neuron>& nex
 	Gradient = sum * AI::Neuron::df(OutputVal);
 }
 
-double AI::Neuron::f(double x){
-	return (double)1/(1 + std::pow(EULER, x));
+long double AI::Neuron::f(long double x){
+	return std::max((double long)0.0, x);
 }
-double AI::Neuron::df(double x){
-	double fast = f(x);
-	return -fast*fast*std::pow(EULER, x);
+long double AI::Neuron::df(long double x){
+	return x >= 0 ? 1.0 : 0.0;
 }
 
 
