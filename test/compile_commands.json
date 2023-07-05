@@ -1,0 +1,56 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-O3",
+      "-I../",
+      "-c",
+      "-I",
+      "/usr/include/c++/11",
+      "-I",
+      "/usr/include/x86_64-linux-gnu/c++/11",
+      "-o",
+      "main.o",
+      "main.cpp"
+    ],
+    "directory": "/home/cosmin/projects/AI/test",
+    "file": "/home/cosmin/projects/AI/test/main.cpp",
+    "output": "/home/cosmin/projects/AI/test/main.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-O3",
+      "-I../",
+      "-c",
+      "-I",
+      "/usr/include/c++/11",
+      "-I",
+      "/usr/include/x86_64-linux-gnu/c++/11",
+      "-o",
+      "NeuralNetwork.o",
+      "../NeuralNetwork/NeuralNetwork.cpp"
+    ],
+    "directory": "/home/cosmin/projects/AI/test",
+    "file": "/home/cosmin/projects/AI/NeuralNetwork/NeuralNetwork.cpp",
+    "output": "/home/cosmin/projects/AI/test/NeuralNetwork.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-O3",
+      "-I../",
+      "-c",
+      "-I",
+      "/usr/include/c++/11",
+      "-I",
+      "/usr/include/x86_64-linux-gnu/c++/11",
+      "-o",
+      "digitrecognition.o",
+      "digitrecognition.cpp"
+    ],
+    "directory": "/home/cosmin/projects/AI/test",
+    "file": "/home/cosmin/projects/AI/test/digitrecognition.cpp",
+    "output": "/home/cosmin/projects/AI/test/digitrecognition.o"
+  }
+]

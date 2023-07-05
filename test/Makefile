@@ -8,7 +8,7 @@ CFLAGS 	:= -O3
 
 .PHONY: clean all 
 
-all: main digit clean
+all: main digit
 
 main: main.o NeuralNetwork.o
 	@echo "serving $@"

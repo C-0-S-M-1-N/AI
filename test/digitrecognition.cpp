@@ -4,7 +4,11 @@
 #include <inttypes.h>
 #include <NeuralNetwork/NeuralNetwork.hpp>
 
-
+/*
+ * This function had nothing to do with the AI, is used to read
+ * the test cases attributes, you can find them on the site: http://yann.lecun.com/exdb/mnist/
+ *
+ * */
 void read_data(std::fstream& img, std::fstream& lab,
 				uint32_t& elements,
 				uint32_t& rows, 
@@ -28,18 +32,22 @@ void read_data(std::fstream& img, std::fstream& lab,
 }
 
 int main(){
-	std::fstream img("../data/t10k-images-idx3-ubyte", std::ios::in | std::ios::binary),
+	std::fstream img("../data/t10k-images-idx3-ubyte", std::ios::in | std::ios::binary), // test files
 				 lab("../data/t10k-labels-idx1-ubyte", std::ios::in | std::ios::binary);
-	uint32_t elements, magic, rows, columns;	
+
+	// attributes about the data sets
+	uint32_t elements, rows, columns;	
 	uint8_t digit, pixel;
+
+	//reading the attributes
 	read_data(img, lab, elements, rows, columns);
 	
-	AI::NeuralNetwork nn("digitRecognition.nn");
+	//making the NN based on a save file, just give it the path to where it lies
+	AI::NeuralNetwork nn("digitRecognition.nn", AI::Functions::ReLU.activation, AI::Functions::ReLU.derivative);
 
 	int correct = 0;
 	std::cout << "testing . . .\n";
 	for(int i = 0; i < elements; i++){
-// 		std::cout << i << '\n';
 		//image reading
 		std::vector<double> image(rows*columns);
 		for(int j = 0; j < rows*columns; j++){
@@ -47,31 +55,27 @@ int main(){
 			image[j] = (double)pixel/255;
 		}
 		lab.read(reinterpret_cast<char*>(&digit), sizeof(digit)); 
-// 		std::vector<double> ll(10);
 		std::vector<double> result(10);
-// 		for(int j = 0; j < 10; j++){
-// 			if(j == digit) ll[j] = 1.0;
-// 			else ll[j] = 0.0;
-// 		}
 
 		nn.FeedInData(image);
 		
 		nn.getData(result);
 
-// 		nn.Backpropagation(ll);
+// 		nn.Backpropagation(ll);  // no need to backpropagate
 		
 
 		double max = result[0];
 		int guess = 0;
-		for(int j = 1; j < 10; j++){ if(result[j] > max) {max = result[j]; guess = j;} }
-		if(guess == digit){
+
+		for(int j = 1; j < 10; j++){ if(result[j] > max) {max = result[j]; guess = j;} } // get the AI guess
+
+		if(guess == digit){ //track the accuracy of the AI
 			correct++;
-// 			std::cout << i << " " << guess << '\n';
 		}
 
 
 	}
 
-	std::cout << (double)correct/elements*100 << "%\n";
+	std::cout << (double)correct/elements*100 << "%\n"; // output the accuracy
 
 }

@@ -5,13 +5,19 @@
 #include <algorithm>
 #include <NeuralNetwork/NeuralNetwork.hpp>
 
-typedef unsigned int uint_32;
+const double MIN_ACCURACY = 87.5;
 
+
+/*
+ * This function had nothing to do with the AI, is used to read
+ * the test cases attributes, you can find them on the site: http://yann.lecun.com/exdb/mnist/
+ *
+ * */
 void read_data(std::fstream& img, std::fstream& lab,
-				uint_32& elements,
-				uint_32& rows, 
-				uint_32& columns){
-	uint_32 magic;
+				uint32_t& elements,
+				uint32_t& rows, 
+				uint32_t& columns){
+	uint32_t magic;
 
 	img.read(reinterpret_cast<char*>(&magic), sizeof(magic));
 	magic = __builtin_bswap32(magic);
@@ -30,86 +36,104 @@ void read_data(std::fstream& img, std::fstream& lab,
 }
 
 struct data_{
-// 	unsigned img[28*28], correct[10];
 	std::vector<double> img, correct;
-// 	unsigned correct;
 };
 
-uint64_t image_size = 28*28*60'000,	lab_size = 1;
-uint64_t default_offset_img = 12, 	default_offset_lab = 7;
-
 int main(){
-	srand(time(0));
+	srand(time(0)); // random seed
+	
+	// opening the training data sets
 	std::fstream img("../data/train-images-idx3-ubyte", std::ios::in | std::ios::binary),
 				 lab("../data/train-labels.idx1-ubyte", std::ios::in | std::ios::binary);
-	uint_32 elements;
-	uint_32 magic1, magic2;
-	uint_32 rows, columns;
+	
+	
+	// attributes about the data sets
+	uint32_t elements;
+	uint32_t rows, columns;
 	unsigned char digit;
 	unsigned char pixel;
+	
 
+	// reading the attributes
 	read_data(img, lab, elements, rows, columns);
 
-	std::vector<int> blueprint = {int(rows*columns), 50, 100, 50, 10};
+	std::vector<int> blueprint = {int(rows*columns), 50, 100, 50, 10}; // NN blueprint
 
-	AI::NeuralNetwork nn(blueprint);
+	AI::NeuralNetwork nn(blueprint, AI::Functions::ReLU.activation, AI::Functions::ReLU.derivative);
 	
-	std::vector<data_> imgs(elements);
-	for(int i = 0; i < elements; i++){
-		for(int j = 0; j < rows*columns; j++){
+	std::vector<data_> imgs(elements); // training data disposed in a vector so it can be 
+									   // randomized
+	
+	for(int i = 0; i < elements; i++){ // loop over all the images
+
+		for(int j = 0; j < rows*columns; j++){ // reading the image itself
 			img.read(reinterpret_cast<char*>(&pixel), sizeof(pixel));
 			imgs[i].img.push_back((double)pixel/255);
 		}
-		lab.read(reinterpret_cast<char*>(&digit), sizeof(digit));
-		for(int j = 0; j < 10; j++) imgs[i].correct.push_back(j == digit ? 1.0 : 0.0);
-// 		std::cerr << i << '\n';
+
+		lab.read(reinterpret_cast<char*>(&digit), sizeof(digit)); // reads the digit that is represented in the image
+		for(int j = 0; j < 10; j++) imgs[i].correct.push_back(j == digit ? 1.0 : 0.0); // make the correct output ahead of time
 	}
+
 	img.close();
 	lab.close();
 
 	std::cout << "training\n";
-// 	std::random_shuffle(imgs.begin(), imgs.end());
-// 	
-// 	for(int i = 0; i < 28; i++){
-// 		for(int j = 0; j < 28; j++){
-// 			std::cerr << (imgs[4].img[i*28+j] > 0.5 ? 1 : 0) << ' ';
-// 		}
-// 		std::cerr << '\n';
-// 	}
-// 	for(auto i : imgs[4].correct) std::cerr << i << ' ';
-// return 0;
-
-start_:
-	int corrects = 0;
+	int lastaccuracy = 0, accuracy = 0;
+start_: // label used for re-training the NN with a different order of sets
 	std::random_shuffle(imgs.begin(), imgs.end());
-	for(int i = 0; i < elements; i++){
-		std::vector<double> result(10);
-		
-		nn.FeedInData(imgs[i].img);
-		
-		nn.getData(result);
 
-		nn.Backpropagation(imgs[i].correct);
-		for(int j = 0; j < 10; j++) if(imgs[i].correct[j] == 1){ digit = j; break; }
-		double max = result[0];
-		int guess = 0;
-		for(int j = 1; j < 10; j++){ if(result[j] > max) {max = result[j]; guess = j;} }
-		if(digit == guess){
-			corrects ++;
+	for(int i = 0; i < elements; i++){
+		std::vector<double> result(10); // making the result vector
+		
+		{ 
+			nn.FeedInData(imgs[i].img);
+			
+			nn.getData(result);
+
+			nn.Backpropagation(imgs[i].correct);
+
+			/*
+			 * 	feed the data into the NN
+			 *
+			 * 	get the data out 
+			 *
+			 * 	backpropagate
+			 * */
 		}
-		if(i%10000 == 0){
+		
+
+		for(int j = 0; j < 10; j++) if(imgs[i].correct[j] == 1){ digit = j; break; } // takes the digit that is supposed to be
+
+		double max = result[0];
+		int guess = -1;
+
+		for(int j = 0; j < 10; j++){ if(result[j] >= max) {max = result[j]; guess = j;} } // takes NN's guess as what digit it is
+																						 //
+		if(digit == guess && max != 0){ // keep an eye for how the NN is doing
+			accuracy ++;
+		}
+
+		if(i%10000 == 0){ // some console log that displays where it is <optional>
 			for(auto i:result) std::cout << i << ' ';
 			std::cout << "\t " << guess << " " << (int)digit << '\n';
 		}
-// 		std::cerr << i << '\n';
+
 	}
 
-	if((double)corrects/elements*100 < 87.5) { std::cout << (double)corrects/elements*100 << '\n'; goto start_;}
+	if((double)accuracy/elements*100 < MIN_ACCURACY){ 
+		std::cout << (double)accuracy/elements*100 << '\n'; 
+		if(accuracy - lastaccuracy < 500) AI::eta += 0.01;
+		else AI::eta -= 0.0001;
+		
+		lastaccuracy = accuracy;
+		accuracy = 0;
 
-	nn.exportData("digitRecognition.nn");
-	
-// 	img.open("./data/t10k-images-idx3-ubyte", std::ios::binary | std::ios::in);
-// 	lab.open("./data/t10k-labels-idx1-ubyte", std::ios::binary | std::ios::in);
-// 	read_data(img, lab, elements, rows, columns);
+		goto start_;
+
+	} // if the AI is bad, retrain it
+	std::cout << (double)accuracy/elements*100 << '\n'; 
+
+	nn.exportData("digitRecognition.nn"); // exports the NN status for using it in other programs
 	
 }
