@@ -59,7 +59,7 @@ int main(){
 
 	std::vector<int> blueprint = {int(rows*columns), 50, 100, 50, 10}; // NN blueprint
 
-	AI::NeuralNetwork nn(blueprint, AI::Functions::ReLU.activation, AI::Functions::ReLU.derivative);
+	AI::NeuralNetwork nn(blueprint, AI::Functions::ReLU.activation, AI::Functions::ReLU.derivative, 0.9, 0.001);
 	
 	std::vector<data_> imgs(elements); // training data disposed in a vector so it can be 
 									   // randomized
@@ -123,10 +123,10 @@ start_: // label used for re-training the NN with a different order of sets
 
 	if((double)accuracy/elements*100 < MIN_ACCURACY){ 
 		std::cout << (double)accuracy/elements*100 << '\n'; 
-		if(accuracy - lastaccuracy < 500) AI::eta += 0.01;
-		else AI::eta -= 0.0001;
-		
-		lastaccuracy = accuracy;
+// 		if(accuracy - lastaccuracy < 500) AI::eta += 0.01;
+// 		else AI::eta -= 0.0001;
+// 		
+// 		lastaccuracy = accuracy;
 		accuracy = 0;
 
 		goto start_;
