@@ -1,6 +1,8 @@
 #include <iostream>
 #include <fstream>
-#include "./NeuralNetwork/NeuralNetwork.hpp"
+#include <numeric>
+#include <inttypes.h>
+#include <NeuralNetwork/NeuralNetwork.hpp>
 
 
 void read_data(std::fstream& img, std::fstream& lab,
@@ -26,8 +28,8 @@ void read_data(std::fstream& img, std::fstream& lab,
 }
 
 int main(){
-	std::fstream img("./data/t10k-images-idx3-ubyte", std::ios::in | std::ios::binary),
-				 lab("./data/t10k-labels-idx1-ubyte", std::ios::in | std::ios::binary);
+	std::fstream img("../data/t10k-images-idx3-ubyte", std::ios::in | std::ios::binary),
+				 lab("../data/t10k-labels-idx1-ubyte", std::ios::in | std::ios::binary);
 	uint32_t elements, magic, rows, columns;	
 	uint8_t digit, pixel;
 	read_data(img, lab, elements, rows, columns);

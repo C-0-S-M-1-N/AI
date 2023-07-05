@@ -3,7 +3,7 @@
 #include<vector>
 #include <inttypes.h>
 #include <algorithm>
-#include "./NeuralNetwork/NeuralNetwork.hpp"
+#include <NeuralNetwork/NeuralNetwork.hpp>
 
 typedef unsigned int uint_32;
 
@@ -40,8 +40,8 @@ uint64_t default_offset_img = 12, 	default_offset_lab = 7;
 
 int main(){
 	srand(time(0));
-	std::fstream img("./data/train-images-idx3-ubyte", std::ios::in | std::ios::binary),
-				 lab("./data/train-labels.idx1-ubyte", std::ios::in | std::ios::binary);
+	std::fstream img("../data/train-images-idx3-ubyte", std::ios::in | std::ios::binary),
+				 lab("../data/train-labels.idx1-ubyte", std::ios::in | std::ios::binary);
 	uint_32 elements;
 	uint_32 magic1, magic2;
 	uint_32 rows, columns;
