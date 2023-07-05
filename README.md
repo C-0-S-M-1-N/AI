@@ -1,8 +1,8 @@
 # This is basic Neural Network written in C++  
 
 ## Usage  
-    first off start by including the library with `#include <NeuralNetwork/NeuralNetwork.cpp>`
-    the class is in the `AI` namespace, `AI::NeuralNetwork` provides tow constructors, one for an precomputed weight map and one for creating an neural network from scratch  
+first off start by including the library with `#include <NeuralNetwork/NeuralNetwork.cpp>`
+the class is in the `AI` namespace, `AI::NeuralNetwork` provides tow constructors, one for an precomputed weight map and one for creating an neural network from scratch  
     
 ## Documentation  
 - `AI::NeuralNetwork::NeuralNetwork(const std::vector<int>& blueprint)`  

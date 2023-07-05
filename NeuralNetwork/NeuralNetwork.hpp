@@ -1,22 +1,36 @@
 #pragma once
 #include <vector>
 #include <string>
+#include <functional>
+#include <inttypes.h>
 
 #define EULER 2.71828
 
 namespace AI{
 
+namespace Functions{
+
+struct functions{
+	std::function<long double(long double)> activation, derivative;
+};
+
+extern functions sigmoid, tanh, ReLU, linear, PReLU,
+	   			 binaryStep;
+extern long double PReLU_argument;
+
+}; // namespace Functions
+
+
 struct connections{ long double weight, deltaweight; };
 
 class Neuron{
 	std::vector<connections> fwd;
-	static long double f(long double x);
-	static long double df(long double x);
 	int ith;
 	
 
 public:
-	static long double alpha, eta;
+	
+// 	static long double alpha, eta;
 	long double OutputVal;
 	long double Gradient;
 	Neuron(int fwdElements, int bckElements, int i, bool randW = 1,
@@ -28,18 +42,21 @@ public:
 	std::vector<connections> getConnections() const { return fwd; }
 };
 
+extern long double eta, alpha;
+
 class NeuralNetwork{
 	
 	std::vector<std::vector<Neuron>> net;
-	double error; //RMS error type
-	int counter;
 public:
 	/**
 	 * @breif network constructor
 	 * @param takes the topology of the nn, number of neurons/layer
 	 *
 	 * */
-	NeuralNetwork(const std::vector<int>&);
+	NeuralNetwork(const std::vector<int>& topology,
+				  std::function<long double(long double)> activation = AI::Functions::linear.activation,
+				  std::function<long double(long double)> derivative = AI::Functions::linear.derivative,
+				  const long double alpha = 0.8, const long double eta = 0.0001);
 	/**
 	 * @breif function that provides the input layer data
 	 * @param data witch is type T
@@ -58,8 +75,10 @@ public:
 
 	void exportData(const std::string& outFile) const;
 
-	NeuralNetwork(const std::string& file);
-
+	NeuralNetwork(const std::string& file, 
+				  std::function<long double(long double)> activation = AI::Functions::linear.activation,
+				  std::function<long double(long double)> derivative = AI::Functions::linear.derivative
+				 );
 };
 
 

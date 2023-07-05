@@ -1,4 +1,3 @@
-#include "NeuralNetwork.hpp"
 #include <cstdlib>
 #include <random>
 #include <cassert>
@@ -7,10 +6,57 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+#include <functional>
+#include "NeuralNetwork.hpp"
 
+#define euler 2.71828
+
+std::function<long double(long double)> f, df;
+
+AI::Functions::functions AI::Functions::sigmoid = {
+	[](long double x) -> long double{ return 1.0/(1.0 + 1.0/std::pow(euler, x)); },
+	[](long double x) -> long double{
+		long double fast = 1.0/(1.0 + 1.0/std::pow(euler, x));
+		return fast*(1 - fast);
+	}
+};
+
+AI::Functions::functions AI::Functions::tanh = {
+	[](long double x) -> long double{ return std::tanh(x); },
+	[](long double x) -> long double{ return (1.0 - std::tanh(x)*std::tanh(x)); }
+};
+
+AI::Functions::functions AI::Functions::ReLU = {
+	[](long double x) -> long double{ return x > 0 ? x : 0; },
+	[](long double x) -> long double{ return x > 0 ? 1 : 0; }
+};
+
+AI::Functions::functions AI::Functions::linear = {
+	[](long double x) -> long double{ return x; },
+	[](long double x) -> long double{ return 1; }
+};
+
+long double AI::Functions::PReLU_argument = 0.01;
+
+AI::Functions::functions AI::Functions::PReLU = {
+
+	[](long double x) -> long double{ return x > 0 ? PReLU_argument*x : x; },
+	[](long double x) -> long double{ return x > 0 ? PReLU_argument : 1; }
+};
+
+AI::Functions::functions AI::Functions::binaryStep = {
+	[](long double x) -> long double{ return x >= 0 ? 1 : 0; },
+	[](long double x) -> long double{ return 0; }
+};
+
+long double AI::alpha;
+long double AI::eta;
 
 /***************NEURAL NETWORK***************/
-AI::NeuralNetwork::NeuralNetwork(const std::vector<int>& topology){
+AI::NeuralNetwork::NeuralNetwork(const std::vector<int>& topology,
+				   				 std::function<long double(long double)> activation,
+								 std::function<long double(long double)> derivative,
+								 long double alpha, long double eta){
 	for(int i = 0; i < topology.size(); i++){
 		net.push_back(std::vector<Neuron>());
 		for(int j = 0; j <= topology[i]; j++){
@@ -24,7 +70,11 @@ AI::NeuralNetwork::NeuralNetwork(const std::vector<int>& topology){
 	for(int i = 0; i < topology.size(); i++){
 		net[i].back().OutputVal = 0;
 	}
-	
+
+	f  = activation;
+	df = derivative;
+	AI::alpha = alpha;
+	AI::eta = eta;
 }
 
 void AI::NeuralNetwork::FeedInData(const std::vector<double>& data){
@@ -47,14 +97,9 @@ void AI::NeuralNetwork::FeedInData(const std::vector<double>& data){
 void AI::NeuralNetwork::Backpropagation(const std::vector<double>& data){
 	
 	assert(data.size() == net.back().size() - 1);
-// 	error = 0; //reset the error
-// 	for(int i = 0; i < net.back().size() - 1; i++){
-// 		error += (data[i] - net.back()[i].OutputVal)*(data[i] - net.back()[i].OutputVal);
-// 	}
-// 	error /= ((double)data.size()-1);
-// 	error = std::sqrt(error);
 
 	//calculate errors and gradients
+
 	for(int i = 0; i < net.back().size() - 1; i++){
 		net.back()[i].calculateOutputGradient(data[i]);
 	}
@@ -66,11 +111,11 @@ void AI::NeuralNetwork::Backpropagation(const std::vector<double>& data){
 		}
 	}
 	//adjusting weights
-		for(int i = net.size() - 1; i > 0; i--)	{
-			for(int j = 0; j < net[i].size() - 1; j++){
-				net[i][j].updateWeights(net[i-1]);
-			}
+	for(int i = net.size() - 1; i > 0; i--)	{
+		for(int j = 0; j < net[i].size() - 1; j++){
+			net[i][j].updateWeights(net[i-1]);
 		}
+	}
 }
 
 void AI::NeuralNetwork::getData(std::vector<double>& data) const {
@@ -101,9 +146,12 @@ void AI::NeuralNetwork::exportData(const std::string& outFile) const{
 		}
 	}
 	out << 0;
+	out << alpha << ' ' << eta;
 }
 
-AI::NeuralNetwork::NeuralNetwork(const std::string& file){
+AI::NeuralNetwork::NeuralNetwork(const std::string& file,
+								 std::function<long double(long double)> activation,
+				  				 std::function<long double(long double)> derivative){
 	std::fstream inp(file, std::ios::in);
 	int n; inp >> n; //layers of neurons
 
@@ -123,13 +171,16 @@ AI::NeuralNetwork::NeuralNetwork(const std::string& file){
 
 		}
 	}
+	f  = activation;
+	df = derivative;
+	
+	inp >> AI::alpha >> AI::eta;
+
 
 }
 
 /************NEURON****************/
 
-long double AI::Neuron::alpha = 0.8;
-long double AI::Neuron::eta = 0.0001;
 
 AI::Neuron::Neuron(int fwdElements, int bckElements, int i, bool randW,
 				const std::vector<double>* v){
@@ -155,8 +206,8 @@ AI::Neuron::Neuron(int fwdElements, int bckElements, int i, bool randW,
 void AI::Neuron::updateWeights(std::vector<Neuron>& lastLayer){
 	for(int i = 0; i < lastLayer.size() - 1; i++){
 		long double delta = 
-				eta * lastLayer[i].OutputVal * Gradient
-				+alpha * lastLayer[i].fwd[ith].deltaweight
+				AI::eta * lastLayer[i].OutputVal * Gradient
+				+ AI::alpha * lastLayer[i].fwd[ith].deltaweight
 				;
 		lastLayer[i].fwd[ith].deltaweight = delta;
 		lastLayer[i].fwd[ith].weight += delta;
@@ -187,14 +238,5 @@ void AI::Neuron::calculateHiddenLayerGradiend(const std::vector<AI::Neuron>& nex
 		sum += fwd[i].weight * nextLayer[i].Gradient;
 	}
 
-	Gradient = sum * AI::Neuron::df(OutputVal);
+	Gradient = sum * df(OutputVal);
 }
-
-long double AI::Neuron::f(long double x){
-	return std::max((double long)0.0, x);
-}
-long double AI::Neuron::df(long double x){
-	return x >= 0 ? 1.0 : 0.0;
-}
-
-
