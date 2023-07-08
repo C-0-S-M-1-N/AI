@@ -4,7 +4,7 @@
 
 CC 		:= g++
 CINCL 	:= -I../
-CFLAGS 	:= -O3 -Wall
+CFLAGS 	:= -O3 -Wall -DDEBUG
 
 .PHONY: clean all 
 
