@@ -24,6 +24,7 @@ void debug(const std::string& msj){
 
 #else
 void debug(const char* msj){ return; } //it gets optimized away
+void debug(const std::string& msj){ return; }
 #endif
 
 std::function<long double(long double)> f, df;
