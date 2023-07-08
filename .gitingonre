@@ -1,4 +1,4 @@
 *.swp
-./test/.cache/
+./test/.cache
 *.plist
 ./*/*.plist

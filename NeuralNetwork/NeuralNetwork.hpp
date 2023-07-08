@@ -26,20 +26,20 @@ struct connections{ long double weight, deltaweight; };
 class Neuron{
 	std::vector<connections> fwd;
 	int ith;
-	
 
 public:
 	
 // 	static long double alpha, eta;
 	long double OutputVal;
 	long double Gradient;
-	Neuron(int fwdElements, int bckElements, int i, bool randW = 1,
-					const std::vector<double>* v = 0);
+	Neuron(size_t fwdElements, size_t i, bool randW = 1,
+					const std::vector<long double>* v = 0);
 	void activate(const std::vector<Neuron>& lastLayer);
-	void calculateOutputGradient(double data);
+	void calculateOutputGradient(long double data);
 	void calculateHiddenLayerGradiend(const std::vector<Neuron>& nextLayer);
 	void updateWeights(std::vector<Neuron>& lastLayer);
 	std::vector<connections> getConnections() const { return fwd; }
+	
 };
 
 extern long double eta, alpha;
@@ -47,6 +47,7 @@ extern long double eta, alpha;
 class NeuralNetwork{
 	
 	std::vector<std::vector<Neuron>> net;
+	void NNexportHelper(std::fstream&) const;
 public:
 	/**
 	 * @breif network constructor
@@ -61,17 +62,17 @@ public:
 	 * @breif function that provides the input layer data
 	 * @param data witch is type T
 	 * */
-	void FeedInData(const std::vector<double>& data);
+	void FeedInData(const std::vector<long double>& data);
 	/**
 	 * @breif function that trains the nn based on the correct output
 	 * @param the correct output
 	 * */
-	void Backpropagation(const std::vector<double>& outputData);
+	void Backpropagation(const std::vector<long double>& outputData);
 	/**
 	 * @breif function that returns the data made by the nn 
 	 * @param provider
 	 * */
-	void getData(std::vector<double>& data) const;
+	void getData(std::vector<long double>& data) const;
 
 	void exportData(const std::string& outFile) const;
 

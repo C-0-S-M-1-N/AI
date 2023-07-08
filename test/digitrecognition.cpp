@@ -43,19 +43,19 @@ int main(){
 	read_data(img, lab, elements, rows, columns);
 	
 	//making the NN based on a save file, just give it the path to where it lies
-	AI::NeuralNetwork nn("digitRecognition.nn", AI::Functions::ReLU.activation, AI::Functions::ReLU.derivative);
+	AI::NeuralNetwork nn("./digitRecognition.nn", AI::Functions::ReLU.activation, AI::Functions::ReLU.derivative);
 
 	int correct = 0;
 	std::cout << "testing . . .\n";
 	for(int i = 0; i < elements; i++){
 		//image reading
-		std::vector<double> image(rows*columns);
+		std::vector<long double> image(rows*columns);
 		for(int j = 0; j < rows*columns; j++){
 			img.read(reinterpret_cast<char*>(&pixel), sizeof(pixel)); 
-			image[j] = (double)pixel/255;
+			image[j] = (long double)pixel/255;
 		}
 		lab.read(reinterpret_cast<char*>(&digit), sizeof(digit)); 
-		std::vector<double> result(10);
+		std::vector<long double> result(10);
 
 		nn.FeedInData(image);
 		

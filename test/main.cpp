@@ -36,7 +36,7 @@ void read_data(std::fstream& img, std::fstream& lab,
 }
 
 struct data_{
-	std::vector<double> img, correct;
+	std::vector<long double> img, correct;
 };
 
 int main(){
@@ -58,7 +58,7 @@ int main(){
 	read_data(img, lab, elements, rows, columns);
 
 	std::vector<int> blueprint = {int(rows*columns), 50, 100, 50, 10}; // NN blueprint
-
+	
 	AI::NeuralNetwork nn(blueprint, AI::Functions::ReLU.activation, AI::Functions::ReLU.derivative, 0.9, 0.001);
 	
 	std::vector<data_> imgs(elements); // training data disposed in a vector so it can be 
@@ -79,12 +79,15 @@ int main(){
 	lab.close();
 
 	std::cout << "training\n";
-	int lastaccuracy = 0, accuracy = 0;
-start_: // label used for re-training the NN with a different order of sets
+	size_t accuracy = 0;
+
+	while((long double)accuracy/elements*100 < MIN_ACCURACY){
+	accuracy = 0;
+
 	std::random_shuffle(imgs.begin(), imgs.end());
 
 	for(int i = 0; i < elements; i++){
-		std::vector<double> result(10); // making the result vector
+		std::vector<long double> result(10); // making the result vector
 		
 		{ 
 			nn.FeedInData(imgs[i].img);
@@ -120,18 +123,8 @@ start_: // label used for re-training the NN with a different order of sets
 		}
 
 	}
+	}
 
-	if((double)accuracy/elements*100 < MIN_ACCURACY){ 
-		std::cout << (double)accuracy/elements*100 << '\n'; 
-// 		if(accuracy - lastaccuracy < 500) AI::eta += 0.01;
-// 		else AI::eta -= 0.0001;
-// 		
-// 		lastaccuracy = accuracy;
-		accuracy = 0;
-
-		goto start_;
-
-	} // if the AI is bad, retrain it
 	std::cout << (double)accuracy/elements*100 << '\n'; 
 
 	nn.exportData("digitRecognition.nn"); // exports the NN status for using it in other programs

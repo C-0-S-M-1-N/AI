@@ -60,11 +60,9 @@ AI::NeuralNetwork::NeuralNetwork(const std::vector<int>& topology,
 	for(int i = 0; i < topology.size(); i++){
 		net.push_back(std::vector<Neuron>());
 		for(int j = 0; j <= topology[i]; j++){
-			int fwd, bck;
-			if(i == 0) fwd = topology[i+1], bck = 0;
-			else if(i == topology.size()-1) fwd = 0, bck = topology[i-1];
-			else fwd = topology[i+1], bck = topology[i-1];
-			net.back().push_back(Neuron(fwd, bck, j));
+			int fwd = i >= topology.size() - 1 ? 0 : topology[i+1];
+
+			net.back().push_back(Neuron(fwd, j));
 		}
 	}
 	for(int i = 0; i < topology.size(); i++){
@@ -77,7 +75,7 @@ AI::NeuralNetwork::NeuralNetwork(const std::vector<int>& topology,
 	AI::eta = eta;
 }
 
-void AI::NeuralNetwork::FeedInData(const std::vector<double>& data){
+void AI::NeuralNetwork::FeedInData(const std::vector<long double>& data){
 	assert(data.size() == net[0].size()-1); //error checking
 	
 	for(int i = 0; i < data.size(); i++){
@@ -94,7 +92,7 @@ void AI::NeuralNetwork::FeedInData(const std::vector<double>& data){
 }
 
 
-void AI::NeuralNetwork::Backpropagation(const std::vector<double>& data){
+void AI::NeuralNetwork::Backpropagation(const std::vector<long double>& data){
 	
 	assert(data.size() == net.back().size() - 1);
 
@@ -118,72 +116,112 @@ void AI::NeuralNetwork::Backpropagation(const std::vector<double>& data){
 	}
 }
 
-void AI::NeuralNetwork::getData(std::vector<double>& data) const {
+void AI::NeuralNetwork::getData(std::vector<long double>& data) const {
 	data.clear();
-	for(int i = 0; i < net.back().size(); i++){
+	for(int i = 0; i < net.back().size() - 1; i++){
 		data.push_back(net.back()[i].OutputVal);
 	}
 }
 
-void AI::NeuralNetwork::exportData(const std::string& outFile) const{
+void AI::NeuralNetwork::NNexportHelper(std::fstream& output) const{
+	size_t consts_to_write;
+	long double weight;
+	for(size_t i = 0; i < net.size(); i++){
+		consts_to_write = net[i].size(); // number of neurons in the layer i
+		output.write(reinterpret_cast<char*>(&consts_to_write), sizeof(consts_to_write));
 
-	std::fstream out(outFile, std::ios::out);
-	out << net.size() << '\n';	//layers of neurons
-	std::vector<connections> neuronWeights;
+		for(size_t j = 0; j < net[i].size(); j++){
+			std::vector<connections> neuronWeights = net[i][j].getConnections();
+			consts_to_write = neuronWeights.size(); // number of neurons
+													// in the nex layer
+													// the same as the number 
+													// of weights
 
-	for(int i = 0; i < net.size(); i ++){
-		out << net[i].size() << ' '; //n/o neurons in that layer
+			output.write(reinterpret_cast<char*>(&consts_to_write), sizeof(consts_to_write));
+			for(size_t k = 0; k < neuronWeights.size(); k++){
+				weight = neuronWeights[k].weight; // the weight
 
-		for(int j = 0; j < net[i].size(); j++){
-
-			neuronWeights = net[i][j].getConnections();
-			out << neuronWeights.size() << ' '; // n/o neurons of the next layer
-												// AKA weights
-
-			for(int k = 0; k < neuronWeights.size(); k++){
-				out << neuronWeights[k].weight << ' '; //the weight itself
+				output.write(reinterpret_cast<char*>(&weight), sizeof(weight));
 			}
+
 		}
+
 	}
-	out << 0;
-	out << alpha << ' ' << eta;
+
+}
+
+void AI::NeuralNetwork::exportData(const std::string& outFile) const{
+	std::fstream output;
+	output.exceptions(std::ios::badbit | std::ios::failbit);
+	try{
+		output.open(outFile, std::ios::out | std::ios::binary);
+		
+		size_t consts_to_write;
+		
+		consts_to_write = net.size();
+		output.write(reinterpret_cast<char*>(&consts_to_write), sizeof(consts_to_write));
+
+		NNexportHelper(output);	
+
+	}
+	catch(const std::fstream::failure& e){
+		std::cerr << "can't create/open the file\n" << e.what() << std::endl;
+	}
+	output.write(reinterpret_cast<char*>(&alpha), sizeof(alpha));
+	output.write(reinterpret_cast<char*>(&eta), sizeof(eta));
 }
 
 AI::NeuralNetwork::NeuralNetwork(const std::string& file,
 								 std::function<long double(long double)> activation,
-				  				 std::function<long double(long double)> derivative){
-	std::fstream inp(file, std::ios::in);
-	int n; inp >> n; //layers of neurons
+								 std::function<long double(long double)> derivative){
+	std::fstream input;
+	input.exceptions(std::ios::badbit | std::ios::failbit);
 
-	for(int i = 0; i < n; i++){
-		net.push_back(std::vector<Neuron>());
-		int neurons; inp >> neurons; // n/o neurons in the layer
+	try{
+		input.open(file, std::ios::in | std::ios::binary);
 
-		for(int j = 0; j < neurons; j++){
-			int nweight; inp >> nweight; // n/o neurons in the next layer
-			std::vector<double> w;
+		long double weight;
+		size_t layers;
+		input.read(reinterpret_cast<char*>(&layers), sizeof(layers));
+		
+		for(size_t i = 0; i < layers; i++){
 
-			for(int k = 0; k < nweight; k++){
-				double weight; inp >> weight; w.push_back(weight);
+			net.push_back(std::vector<Neuron>());
+			int neurons; 
+			input.read(reinterpret_cast<char*>(&neurons), sizeof(neurons));
+
+			for(int j = 0; j < neurons; j++){ 
+
+				size_t next_layer_neurons; 
+				input.read(reinterpret_cast<char*>(&next_layer_neurons), 
+						   sizeof(next_layer_neurons));
+				std::vector<long double> weights;
+
+				for(int k = 0; k < next_layer_neurons; k++){ 
+					input.read(reinterpret_cast<char*>(&weight), sizeof(weight));
+					weights.push_back(weight);
+				}
+				net[i].push_back(Neuron(next_layer_neurons, j, 0, &weights));
 			}
-			
-			net[i].push_back(Neuron(nweight, 0, j, 0, &w));
-
 		}
+
+	} catch (const std::ios::failure& e){
+		std::cerr << "choudn't open the file " << file << '\n'
+				<< e.what() << std::endl;
 	}
-	f  = activation;
+	f = activation;
 	df = derivative;
 	
-	inp >> AI::alpha >> AI::eta;
 
-
+	input.read(reinterpret_cast<char*>(&alpha), sizeof(alpha));
+	input.read(reinterpret_cast<char*>(&eta), sizeof(eta));
 }
 
 /************NEURON****************/
 
 
-AI::Neuron::Neuron(int fwdElements, int bckElements, int i, bool randW,
-				const std::vector<double>* v){
+AI::Neuron::Neuron(size_t fwdElements, size_t i, bool randW,
+				const std::vector<long double>* v){
 	ith = i;
 	if(randW){
 		std::random_device rd;
@@ -228,7 +266,7 @@ void AI::Neuron::activate(const std::vector<Neuron>& lastLayer){
 // 		std::cerr << totalX << '\n';
 }
 
-void AI::Neuron::calculateOutputGradient(double data){
+void AI::Neuron::calculateOutputGradient(long double data){
 	Gradient = (data - OutputVal) * df(OutputVal);
 }
 

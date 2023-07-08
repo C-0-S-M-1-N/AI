@@ -22,7 +22,7 @@ the class is in the `AI` namespace, `AI::NeuralNetwork` provides tow constructor
 
 - `AI::NeuralNetwork::getData(std::vector<double>& data)`
     - calculates the output of the output of the NN  
-        !! `AI::NeuralNetwork::FeedInData(...)` calculates the output, `AI::NeuralNetwork::getData(...)` only copies the output of it into `data`  
+        ! `AI::NeuralNetwork::FeedInData(...)` calculates the output, `AI::NeuralNetwork::getData(...)` only copies the output of it into `data`  
 - `AI::NeuralNetwork::Backpropagation(const std::vector<double>& outputData)`
     - applys backpropagation over the NN to train it, it take as a parameter the correct output of the training set and retweakes the weights accordingly to minimise the error
 - `AI::NeuralNetwork::Backpropagation(const std::string& file, ...)`
@@ -42,4 +42,4 @@ linear, binary step
 about PReLU, the parameter can be modified by modifing the `AI::functions::PReLU_argument` variable
 
 
-happy coding!
+happy coding !
