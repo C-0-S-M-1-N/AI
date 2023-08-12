@@ -9,11 +9,11 @@ make sure to compile `NeuralNetwork.cpp` and link the object with the project
 ## With the shared library
 
 ### Linux
-! make sure you [installed](##Linux) the library  
+! make sure you [installed](#Linux) the library  
 - at linking time include `-lNeuralNetwork`  
 
 ### Windows
-! make sure you [compiled](##Windows) the library  
+! make sure you [compiled](#Windows) the library  
 - copy the dll file to the binary location 
 - at linking time include `-lNeuralNetwork`
 
@@ -28,18 +28,18 @@ make sure to compile `NeuralNetwork.cpp` and link the object with the project
         the example above creates a NN that has 2 neurons in the input layer, 2 hidden layers, one having 10 neurons and the second 15, and the output layer having 4 neurons.  
     - generates the weights based on a clever tehnique called Xavier's algorithm  
     - takes the activation function and its derivative, `f` and `df` -- default is the linear function  
-    - takes tow argumenst alpha, the momentum for backpropagation, and eta, the learing rate -- default is 0.8 and 0.0001
+    - takes tow arguments: alpha, the momentum for backpropagation, and eta, the learing rate -- default is 0.8 and 0.0001
 
 - `AI::NeuralNetwork::FeedInData(const std::vector<double>& data)`  
-    - take the input data in a form of an array, `data` must have the same size as `blueprint[0]`  
+    - takes the input data in the form of an array, (`data.size()` must be equal to `blueprint[0]`)  
 
 - `AI::NeuralNetwork::getData(std::vector<double>& data)`
-    - calculates the output of the output of the NN  
+    - calculates the output of the NN  
         ! `AI::NeuralNetwork::FeedInData(...)` calculates the output, `AI::NeuralNetwork::getData(...)` only copies the output of it into `data`  
 - `AI::NeuralNetwork::Backpropagation(const std::vector<double>& outputData)`
     - applies backpropagation over the NN to train it, it take as a parameter the correct output of the training set and retweakes the weights accordingly to minimise the error
-- `AI::NeuralNetwork::Backpropagation(const std::string& file, ...)`
-    - provinding the filepath to the already computed weight, is loads them into the neural net
+- `AI::NeuralNetwork::NeuralNetwork(const std::string& file, ...)`
+    - provinding the filepath to the already computed weight-map, is loads in into the neural net
     - takes the activation function and its derivatie -- default is the linear function  
     - it remembers the learing rate and momentum, its not requiered to pass as an argument  
 
@@ -57,7 +57,7 @@ about PReLU, the parameter can be modified by modifing the `AI::functions::PReLU
 # Compiling the program from source
 
 ## Linux
-requiered: a c++ compiler
+requiered: a c++ compiler  
 optionaly: gnu make
 
 ### Using the Makefile
@@ -67,7 +67,7 @@ head to `./link/`:
 - uninstalling  `make uninstall`
 
 ### Using bash commands
-head to the root directory (`.`)
+head to the root directory (`./AI/`)
 - building:  
 ```bash
 g++ ./NeuralNetwork/NeuralNetwork.cpp -o NeuralNetwork.o -fpic -O3 -Wall -c \
@@ -79,6 +79,10 @@ g++ NeuralNetwork.o -o NeuralNetwork.so.1 -shared \
 `sudo rm /lib/NeuralNetwork.so.*`
 
 ## Windows
-requiered: a c++ compiler (preferably g++ or clang)
+requiered: a c++ compiler  
+
+you can use the makefile if you have g++ installed thru msys2
+but its eazy to compile it form source with inline commands as the library is self 
+sustained and dosen't have any dependecies.
 
 happy coding !
