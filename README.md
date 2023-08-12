@@ -1,7 +1,7 @@
 
 # Usage  
 first off start by including the library with `#include <NeuralNetwork/NeuralNetwork.hpp>`
-`AI::NeuralNetwork` provides tow constructors, one for an precomputed weight map and one for creating an neural network from scratch  
+`AI::NeuralNetwork` provides tow constructors, one for a precomputed weight map and one for creating a neural network from scratch  
 
 ## With the source
 make sure to compile `NeuralNetwork.cpp` and link the object with the project
